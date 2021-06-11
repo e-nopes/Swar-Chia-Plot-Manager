@@ -17,10 +17,11 @@ def _get_config():
     f.close()
     return config
 
-
 def _get_chia_location(config):
     return config.get('chia_location', 'chia')
 
+def _get_max_location(config):
+    return config.get('max_location', 'chia_plot')
 
 def _get_progress_settings(config):
     progress_setting = config['progress']
@@ -137,10 +138,12 @@ def _check_parameters(parameter, expected_parameters, parameter_type):
 def get_config_info():
     config = _get_config()
     chia_location = _get_chia_location(config=config)
+    max_location = _get_max_location(config=config)
     manager_check_interval, log_level = _get_manager_settings(config=config)
     log_directory = _get_log_settings(config=config)
     if not os.path.exists(log_directory):
         os.makedirs(log_directory)
+    # get the 'jobs' in dict
     jobs = _get_jobs(config=config)
     max_concurrent, max_for_phase_1, minimum_minutes_between_jobs = _get_global_config(config=config)
     progress_settings = _get_progress_settings(config=config)

@@ -95,6 +95,16 @@ progress:
   phase3_weight: 42.29
   phase4_weight: 3.88
 
+  max_phase1_line_end: 17
+  max_phase2_line_end: 13
+  max_phase3_line_end: 14
+  max_phase4_line_end: 5
+  max_phase1_weight: 33.4
+  max_phase2_weight: 20.43
+  max_phase3_weight: 42.29
+  max_phase4_weight: 3.88
+
+
 
 global:
   # These are the settings that will be used globally by the plot manager.

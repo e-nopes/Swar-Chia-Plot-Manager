@@ -1,5 +1,6 @@
 class Job:
     name = None
+    jobtype = None
     current_work_id = 0
 
     farmer_public_key = None
@@ -42,6 +43,7 @@ class Job:
 class Work:
     work_id = None
     job = None
+    jobtype = None
     pid = None
     plot_id = None
     log_file = None

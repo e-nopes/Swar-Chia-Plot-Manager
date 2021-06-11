@@ -42,10 +42,20 @@ def get_manager_processes():
 def is_windows():
     return platform.system() == 'Windows'
 
+def get_chia_executable_names():
+    return [f'chia{".exe" if is_windows() else ""}',  f'chia-plotter{".exe" if is_windows() else ""}']
+
+def get_executable_name(mode):
+    if mode:
+        return f'chia{".exe" if is_windows() else ""}'
+    else:
+        return f'chia-plotter{".exe" if is_windows() else ""}'
 
 def get_chia_executable_name():
     return f'chia{".exe" if is_windows() else ""}'
 
+def get_max_executable_name():
+    return f'chia_plot{".exe" if is_windows() else ""}'
 
 def get_plot_k_size(commands):
     try:
@@ -85,9 +95,10 @@ def get_plot_drives(commands, drives=None):
     return temporary_drive, temporary2_drive, destination_drive
 
 
-def get_chia_drives():
+def get_chia_drives(mode):
     drive_stats = {'temp': {}, 'temp2': {}, 'dest': {}}
-    chia_executable_name = get_chia_executable_name()
+    #chia or chia-plotter
+    chia_executable_name = get_executable_name(mode)
     for process in psutil.process_iter():
         try:
             if chia_executable_name not in process.name() and 'python' not in process.name().lower():
@@ -95,8 +106,9 @@ def get_chia_drives():
         except (psutil.AccessDenied, psutil.NoSuchProcess):
             continue
         try:
-            if 'plots' not in process.cmdline() or 'create' not in process.cmdline():
-                continue
+            if not mode:
+                if 'plots' not in process.cmdline() or 'create' not in process.cmdline():
+                    continue
         except (psutil.ZombieProcess, psutil.NoSuchProcess):
             continue
         commands = process.cmdline()
@@ -169,35 +181,63 @@ def get_temp_size(plot_id, temporary_directory, temporary2_directory):
             pass
     return temp_size
 
+#debug me 
+def printWork ( work ):
+    print(work.job, work.log_file, work.datetime_start, work.pid , work.plot_id, work.work_id , work.temporary_drive, work.temporary2_drive , work.destination_drive , work.temp_file_size , work.k_size)
+
 
 def get_running_plots(jobs, running_work, instrumentation_settings):
     chia_processes = []
     logging.info(f'Getting running plots')
+    max_mode = False
+    #pain
     chia_executable_name = get_chia_executable_name()
+    max_executable_name = get_max_executable_name()
+
+    if max_executable_name:
+        max_mode = True
+
+    #find our processes
     for process in psutil.process_iter():
         try:
-            if chia_executable_name not in process.name() and 'python' not in process.name().lower():
+            skip_filter = False
+
+            if max_executable_name in process.name():
+                print("found you")
+                skip_filter=True
+                
+
+            # filter out irrelevent processes
+            if skip_filter or chia_executable_name not in process.name() and 'python' not in process.name().lower() :
                 continue
+
         except (psutil.AccessDenied, psutil.NoSuchProcess):
             continue
         try:
-            if 'plots' not in process.cmdline() or 'create' not in process.cmdline():
+            if max_executable_name not in process.name() and 'plots' not in process.cmdline() or 'create' not in process.cmdline():
                 continue
         except (psutil.ZombieProcess, psutil.NoSuchProcess):
             continue
+
+        #what is this
         if process.parent():
             try:
                 parent_commands = process.parent().cmdline()
+
                 if 'plots' in parent_commands and 'create' in parent_commands:
                     continue
             except (psutil.AccessDenied, psutil.ZombieProcess):
                 pass
+        print("test ",process.name())
         logging.info(f'Found chia plotting process: {process.pid}')
+        print(f'Found chia plotting process: {process.pid}')
+
+        process_name = process.name()
         datetime_start = datetime.fromtimestamp(process.create_time())
-        chia_processes.append([datetime_start, process])
+        chia_processes.append([datetime_start, process, process_name])
     chia_processes.sort(key=lambda x: (x[0]))
 
-    for datetime_start, process in chia_processes:
+    for datetime_start, process, process_name in chia_processes:
         logging.info(f'Finding log file for process: {process.pid}')
         log_file_path = None
         commands = []
@@ -239,9 +279,18 @@ def get_running_plots(jobs, running_work, instrumentation_settings):
                                        temporary2_directory=temporary2_directory)
 
         temporary_drive, temporary2_drive, destination_drive = get_plot_drives(commands=commands)
-        k_size = get_plot_k_size(commands=commands)
+        
+        #hold it
+        k_size=32
+
+        if not max_mode:
+            k_size = get_plot_k_size(commands=commands)
+        else :
+            k_size = 32
+            
         work = deepcopy(Work())
         work.job = assumed_job
+        work.jobtype = process_name
         work.log_file = log_file_path
         work.datetime_start = datetime_start
         work.pid = process.pid
@@ -259,6 +308,8 @@ def get_running_plots(jobs, running_work, instrumentation_settings):
         work.destination_drive = destination_drive
         work.temp_file_size = temp_file_size
         work.k_size = k_size
+
+        printWork(work)
 
         running_work[work.pid] = work
     logging.info(f'Finished finding running plots')

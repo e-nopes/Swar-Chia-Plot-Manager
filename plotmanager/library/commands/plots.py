@@ -1,6 +1,6 @@
 def create(size, memory_buffer, temporary_directory, destination_directory, threads, buckets, bitfield,
            chia_location='chia', temporary2_directory=None, farmer_public_key=None, pool_public_key=None,
-           exclude_final_directory=False):
+           exclude_final_directory=False, max_mode = None, max_location='chia_plot'):
     flags = dict(
         k=size,
         b=memory_buffer,
@@ -20,7 +20,12 @@ def create(size, memory_buffer, temporary_directory, destination_directory, thre
     if exclude_final_directory:
         flags['x'] = ''
 
-    data = [chia_location, 'plots', 'create']
+    if max_mode:
+        data = [max_location, ]
+
+    else:
+        data = [chia_location, 'plots', 'create']
+    
     for key, value in flags.items():
         flag = f'-{key}'
         data.append(flag)
@@ -28,3 +33,4 @@ def create(size, memory_buffer, temporary_directory, destination_directory, thre
             continue
         data.append(str(value))
     return data
+

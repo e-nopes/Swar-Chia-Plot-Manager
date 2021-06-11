@@ -21,6 +21,7 @@ def _get_row_info(pid, running_work, view_settings, as_raw_values=False):
             phase_time_log.append(phase_times.get(i))
 
     row = [
+        work.jobtype if work.job else '?',
         work.job.name if work.job else '?',
         work.k_size,
         plot_id_prefix,
@@ -98,7 +99,7 @@ def get_job_data(jobs, running_work, view_settings, as_json=False):
 
 
 def pretty_print_job_data(job_data):
-    headers = ['num', 'job', 'k', 'plot_id', 'pid', 'start', 'elapsed_time', 'phase', 'phase_times', 'progress', 'temp_size']
+    headers = ['num', 'type', 'jobName', 'k', 'plot_id', 'pid', 'start', 'elapsed_time', 'phase', 'phase_times', 'progress', 'temp_size']
     rows = [headers] + job_data
     return pretty_print_table(rows)
 
@@ -109,7 +110,7 @@ def get_drive_data(drives, running_work, job_data):
 
     pid_to_num = {}
     for job in job_data:
-        pid_to_num[job[4]] = job[0]
+        pid_to_num[job[5]] = job[0]
 
     drive_types = {}
     has_temp2 = False
@@ -185,7 +186,7 @@ def print_json(jobs, running_work, view_settings):
     get_job_data(jobs=jobs, running_work=running_work, view_settings=view_settings, as_json=True)
 
 
-def print_view(jobs, running_work, analysis, drives, next_log_check, view_settings, loop):
+def print_view( jobs, running_work, analysis, drives, next_log_check, view_settings, loop):
     # Job Table
     job_data = get_job_data(jobs=jobs, running_work=running_work, view_settings=view_settings)
 
@@ -199,7 +200,8 @@ def print_view(jobs, running_work, analysis, drives, next_log_check, view_settin
     if os.name == 'nt':
         os.system('cls')
     else:
-        os.system('clear')
+        pass
+        #os.system('clear')
     print(pretty_print_job_data(job_data))
     print(f'Manager Status: {"Running" if manager_processes else "Stopped"}')
     print()

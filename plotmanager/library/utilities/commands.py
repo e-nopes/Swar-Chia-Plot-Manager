@@ -32,12 +32,20 @@ def start_manager():
 
     chia_location, log_directory, config_jobs, manager_check_interval, max_concurrent, max_for_phase_1, \
         minimum_minutes_between_jobs, progress_settings, notification_settings, debug_level, view_settings, \
-        instrumentation_settings = get_config_info()
+        instrumentation_settings, max_mode, max_location = get_config_info()
 
+
+    
     load_jobs(config_jobs)
 
-    test_configuration(chia_location=chia_location, notification_settings=notification_settings,
+    if max_mode:    
+        test_max_configuration(max_location=max_location, notification_settings=notification_settings,
                        instrumentation_settings=instrumentation_settings)
+    else:
+        test_configuration(chia_location=chia_location, notification_settings=notification_settings,
+                       instrumentation_settings=instrumentation_settings)
+
+    
 
     extra_args = []
     if is_windows():
@@ -137,6 +145,7 @@ def view(loop=True):
     analysis = {'files': {}}
     drives = {'temp': [], 'temp2': [], 'dest': []}
     jobs = load_jobs(config_jobs)
+    
     for job in jobs:
         directories = {
             'dest': job.destination_directory,

@@ -165,6 +165,7 @@ def check_log_progress(jobs, running_work, progress_settings, notification_setti
         data = f.read()
         f.close()
 
+        
         line_count = (data.count('\n') + 1)
 
         progress = get_progress(line_count=line_count, progress_settings=progress_settings)
